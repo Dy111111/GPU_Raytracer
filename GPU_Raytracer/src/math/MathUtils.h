@@ -28,7 +28,7 @@
 
 #include <cmath>
 #include <algorithm>
-#include "Config.h"
+#include "core/Config.h"
 
 namespace GLSLPT
 {
