@@ -1,8 +1,8 @@
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
-.sln
+*.sln
 
 GPU_Raytracer/GPU_Raytracer.vcxproj
-GPU_Raytracer/GPU_Raytracer.vcxproj.filter
+GPU_Raytracer/GPU_Raytracer.vcxproj.filters
 GPU_Raytracer/GPU_Raytracer.vcxproj.user
