@@ -1,7 +1,6 @@
-#version 330
-
-out vec4 color;
-in vec2 TexCoords;
+#version 450 core
+layout(local_size_x = 32, local_size_y = 32) in;
+layout(binding = 0, rgba32f) uniform image2D imgPathTrace;
 
 #include common/uniforms.glsl
 #include common/globals.glsl
@@ -16,9 +15,11 @@ in vec2 TexCoords;
 
 void main(void)
 {
-    vec2 coordsTile = TexCoords;//mix(tileOffset, tileOffset + invNumTiles, TexCoords);
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= resolution.x || coord.y >= resolution.y) return;
+    vec2 coordsTile =vec2(coord) / resolution; //mix(tileOffset, tileOffset + invNumTiles, texcoords);
 
-    InitRNG(gl_FragCoord.xy, frameNum);
+    InitRNG(vec2(coord).xy, frameNum);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
@@ -43,9 +44,11 @@ void main(void)
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
-    vec4 accumColor = texture(accumTexture, coordsTile);
+    vec4 accumColor =imageLoad(imgPathTrace, coord);
 
     vec4 pixelColor = PathTrace(ray);
 
-    color = pixelColor + accumColor;
+    vec4 result = pixelColor + accumColor;
+    //vec4 result=vec4(1,0,0,1);
+    imageStore(imgPathTrace, coord, result);
 }

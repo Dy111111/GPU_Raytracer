@@ -107,12 +107,14 @@ namespace GLSLPT
 
         // Shaders
         std::string shadersDirectory;
+        Program* computeShader;
         Program* pathTraceShader;
         Program* pathTraceShaderLowRes;
         Program* outputShader;
         Program* tonemapShader;
 
         // Render textures
+        GLuint imgPathTrace;
         GLuint pathTraceTextureLowRes;
         GLuint pathTraceTexture;
         GLuint accumTexture;
@@ -148,7 +150,7 @@ namespace GLSLPT
         void ResizeRenderer();
         void ReloadShaders();
         void Render();
-        void Present();//
+        void Present();
         void Update(float secondsElapsed);
         float GetProgress();
         int GetSampleCount();
