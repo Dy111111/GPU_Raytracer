@@ -59,6 +59,8 @@ namespace RadeonRays
 
         // Get tree height
         int GetHeight() const;
+        // Get tree height
+        int GetSumNodes() const;
 
         // Get reordered prim indices Nodes are pointing to
         virtual int const* GetIndices() const;
@@ -187,6 +189,10 @@ namespace RadeonRays
     inline int Bvh::GetHeight() const
     {
         return m_height;
+    }
+    inline int Bvh::GetSumNodes() const
+    {
+        return m_nodecnt;
     }
 }
 

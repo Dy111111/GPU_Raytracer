@@ -26,6 +26,7 @@ uniform float envMapRot;
 uniform vec3 uniformLightCol;
 uniform int numOfLights;
 uniform int maxDepth;
+uniform int bvhDepth;
 uniform int topBVHIndex;
 uniform int frameNum;
 uniform float roughnessMollificationAmt;

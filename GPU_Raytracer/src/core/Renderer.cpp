@@ -534,6 +534,7 @@ namespace GLSLPT
             glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap->totalSum);
         }
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
+        glUniform1i(glGetUniformLocation(shaderObject, "bvhDepth"), scene->bvhnodesum);
         glUniform2f(glGetUniformLocation(shaderObject, "resolution"), float(renderSize.x), float(renderSize.y));
         glUniform2f(glGetUniformLocation(shaderObject, "tileResolution"), float(tileWidth), float(tileHeight));
         glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
@@ -634,7 +635,7 @@ namespace GLSLPT
             glViewport(0, 0, renderSize.x, renderSize.y);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(pathTraceShader);*/
-            if (0) {
+            if (1) {
                 //glBindImageTexture(0, pathTraceTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
                 glBindImageTexture(0, accumTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
                 //glBindTexture(GL_TEXTURE_2D, accumTexture);

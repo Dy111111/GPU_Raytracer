@@ -114,6 +114,8 @@ namespace GLSLPT
         RadeonRays::BvhTranslator bvhTranslator; // Produces a flat bvh array for GPU consumption
         RadeonRays::bbox sceneBounds;
 
+        int bvhnodesum;
+
         // Texture Data
         std::vector<Texture*> textures;
         std::vector<unsigned char> textureMapsArray;

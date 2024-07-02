@@ -45,11 +45,22 @@ void main(void)
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
     vec4 accumColor =imageLoad(imgPathTrace, globalCoord);
+    
+    if(false){
+        vec4 pixelColor = PathTrace(ray);
+        vec4 result = pixelColor + accumColor;
+        //vec4 result=vec4(1,0,0,1);
+        imageStore(imgPathTrace, globalCoord, result);
+    }
+    else{
+        int depth=RayDepth(ray, INF);
 
+        vec4 pixelColor = vec4(vec3(float(depth)/bvhDepth),1.0);
+        vec4 result=pixelColor + accumColor;
+        //vec4 result=vec4(1,0,0,1);
+        imageStore(imgPathTrace, globalCoord, result);
+    }
+    
 
-    vec4 pixelColor = PathTrace(ray);
-
-    vec4 result = pixelColor + accumColor;
-    //vec4 result=vec4(1,0,0,1);
-    imageStore(imgPathTrace, globalCoord, result);
+    
 }

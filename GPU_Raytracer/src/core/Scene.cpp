@@ -195,6 +195,7 @@ namespace GLSLPT
             printf("Building BVH for %s\n", meshes[i]->name.c_str());
             meshes[i]->BuildBVH();
         }
+        
     }
 
     void Scene::RebuildInstances()
@@ -220,6 +221,9 @@ namespace GLSLPT
 
         printf("Building scene BVH\n");
         createTLAS();
+
+        bvhnodesum = sceneBvh->GetSumNodes();
+        std::cout << "bvhHeight:" << bvhnodesum << std::endl;
 
         // Flatten BVH
         printf("Flattening BVH\n");

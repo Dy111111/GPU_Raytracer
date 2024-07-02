@@ -191,3 +191,89 @@ bool AnyHit(Ray r, float maxDist)
 
     return false;
 }
+
+
+int RayDepth(Ray r, float maxDist) {
+    // 初始化栈和指针
+    int stack[64];
+    int ptr = 0;
+    stack[ptr++] = -1;
+
+    int index = topBVHIndex;
+    float leftHit = 0.0;
+    float rightHit = 0.0;
+
+    int boxCount = 0;  // 统计射线穿过的包围盒总数
+    bool BLAS = false;
+
+    Ray rTrans;
+    rTrans.origin = r.origin;
+    rTrans.direction = r.direction;
+
+    while (index != -1) {
+        ivec3 LRLeaf = ivec3(texelFetch(BVH, index * 3 + 2).xyz);
+
+        int leftIndex  = int(LRLeaf.x);
+        int rightIndex = int(LRLeaf.y);
+        int leaf       = int(LRLeaf.z);
+
+        //每次访问一个节点就增加计数
+        boxCount++;
+
+        if (leaf > 0) { // 叶节点
+            // 在这里可以处理叶节点的逻辑，本文不需要修改
+        } else if (leaf < 0) { // TLAS 叶节点
+            vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
+            vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
+            vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
+            vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
+
+            mat4 transform = mat4(r1, r2, r3, r4);
+
+            rTrans.origin    = vec3(inverse(transform) * vec4(r.origin, 1.0));
+            rTrans.direction = vec3(inverse(transform) * vec4(r.direction, 0.0));
+
+            stack[ptr++] = -1;
+
+            index = leftIndex;
+            BLAS = true;
+            continue;
+        } else { // 内部节点
+            leftHit =  AABBIntersect(texelFetch(BVH, leftIndex  * 3 + 0).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, rTrans);
+            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, rTrans);
+
+            if (leftHit > 0.0 && rightHit > 0.0) {
+                int deferred = -1;
+                if (leftHit > rightHit) {
+                    index = rightIndex;
+                    deferred = leftIndex;
+                } else {
+                    index = leftIndex;
+                    deferred = rightIndex;
+                }
+
+                stack[ptr++] = deferred;
+                continue;
+            } else if (leftHit > 0.0) {
+                index = leftIndex;
+                continue;
+            } else if (rightHit > 0.0) {
+                index = rightIndex;
+                continue;
+            }
+        }
+
+        index = stack[--ptr];
+
+        if (BLAS && index == -1) {
+            BLAS = false;
+
+            index = stack[--ptr];
+
+            rTrans.origin = r.origin;
+            rTrans.direction = r.direction;
+        }
+    }
+
+    return boxCount;
+}
