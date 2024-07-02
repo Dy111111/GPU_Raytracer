@@ -561,12 +561,12 @@ int main(int argc, char** argv)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 #else
-    // GL 3.0 + GLSL 130
+    // GL 4.5 + GLSL 130
     const char* glsl_version = "#version 430";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 #endif
 
     // Create window with graphics context
@@ -609,6 +609,42 @@ int main(int argc, char** argv)
         return 1;
     }
 #endif
+
+
+    // 检查OpenGL版本
+    
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    std::cout << "OpenGL Vendor: " << vendor << std::endl;
+    const GLubyte* rendererinfo = glGetString(GL_RENDERER);
+    std::cout << "OpenGL Renderer: " << rendererinfo << std::endl;
+    const GLubyte* version = glGetString(GL_VERSION);
+    std::cout << "OpenGL Version: " << version << std::endl;
+
+    // 查询每个维度的最大工作组大小
+    GLint workGroupSize[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupSize[0]); // X维度
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupSize[1]); // Y维度
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupSize[2]); // Z维度
+
+    std::cout << "Max Compute Work Group Size: "
+        << "X: " << workGroupSize[0] << ", "
+        << "Y: " << workGroupSize[1] << ", "
+        << "Z: " << workGroupSize[2] << std::endl;
+
+    // 查询每个维度的最大工作组数量
+    GLint workGroupCount[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupCount[0]); // X维度
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupCount[1]); // Y维度
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupCount[2]); // Z维度
+
+    std::cout << "Max Compute Work Group Count: "
+        << "X: " << workGroupCount[0] << ", "
+        << "Y: " << workGroupCount[1] << ", "
+        << "Z: " << workGroupCount[2] << std::endl;
+
+
+
+
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
