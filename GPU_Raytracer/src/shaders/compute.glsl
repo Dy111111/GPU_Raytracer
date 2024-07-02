@@ -1,7 +1,6 @@
 #version 450 core
-layout(local_size_x = 32, local_size_y = 32) in;
+layout(local_size_x = 16, local_size_y = 16) in;
 layout(binding = 0, rgba32f) uniform image2D imgPathTrace;
-
 #include common/uniforms.glsl
 #include common/globals.glsl
 #include common/intersection.glsl
@@ -15,11 +14,12 @@ layout(binding = 0, rgba32f) uniform image2D imgPathTrace;
 
 void main(void)
 {
-    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
-    if (coord.x >= resolution.x || coord.y >= resolution.y) return;
-    vec2 coordsTile =vec2(coord) / resolution; //mix(tileOffset, tileOffset + invNumTiles, texcoords);
+    ivec2 localCoord = ivec2(gl_GlobalInvocationID.xy);
+    if (localCoord.x >= tileResolution.x || localCoord.y >= tileResolution.y) return;
+    ivec2 globalCoord=localCoord+ivec2(tileStartPos);
+    vec2 coordsTile =vec2(globalCoord) / resolution; //mix(tileOffset, tileOffset + invNumTiles, texcoords);
 
-    InitRNG(vec2(coord).xy, frameNum);
+    InitRNG(vec2(globalCoord).xy, frameNum);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
@@ -44,11 +44,12 @@ void main(void)
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
-    vec4 accumColor =imageLoad(imgPathTrace, coord);
+    vec4 accumColor =imageLoad(imgPathTrace, globalCoord);
+
 
     vec4 pixelColor = PathTrace(ray);
 
     vec4 result = pixelColor + accumColor;
     //vec4 result=vec4(1,0,0,1);
-    imageStore(imgPathTrace, coord, result);
+    imageStore(imgPathTrace, globalCoord, result);
 }

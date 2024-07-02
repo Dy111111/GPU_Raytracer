@@ -16,7 +16,7 @@ in vec2 TexCoords;
 
 void main(void)
 {
-    vec2 coordsTile = TexCoords;//mix(tileOffset, tileOffset + invNumTiles, TexCoords);
+    vec2 coordsTile = mix(tileOffset, tileOffset + invNumTiles, TexCoords);
 
     InitRNG(gl_FragCoord.xy, frameNum);
 

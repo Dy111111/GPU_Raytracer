@@ -3,6 +3,7 @@ uniform vec3 randomVector;
 uniform vec2 resolution;
 uniform vec2 tileResolution;
 uniform vec2 tileOffset;
+uniform vec2 tileStartPos;
 uniform vec2 invNumTiles;
 
 uniform sampler2D accumTexture;

@@ -315,7 +315,7 @@ namespace GLSLPT
         // Create Texture for FBO
         glGenTextures(1, &pathTraceTexture);
         glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, renderSize.x, renderSize.y, 0, GL_RGBA, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tileWidth, tileHeight, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -634,24 +634,36 @@ namespace GLSLPT
             glViewport(0, 0, renderSize.x, renderSize.y);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(pathTraceShader);*/
-            sampleCounter++;
-            glBindImageTexture(0, accumTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-            glBindTexture(GL_TEXTURE_2D, accumTexture);
+            if (0) {
+                //glBindImageTexture(0, pathTraceTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+                glBindImageTexture(0, accumTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+                //glBindTexture(GL_TEXTURE_2D, accumTexture);
 
-            const int xSize = 32, ySize = 32;
-            int xNum = (renderSize.x + xSize - 1) / xSize;
-            int yNum = (renderSize.y + ySize - 1) / ySize;
-           
-            computeShader->Use();
+                const int xSize = 16, ySize = 16;
+                int xNum = (tileWidth + xSize - 1) / xSize;
+                int yNum = (tileHeight + ySize - 1) / ySize;
 
-            glDispatchCompute(xNum, yNum, 1);
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+                computeShader->Use();
 
+                glDispatchCompute(xNum, yNum, 1);
+                glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
+            }
+            else {
+                glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBO);
+                glViewport(0, 0, tileWidth, tileHeight);
+                glBindTexture(GL_TEXTURE_2D, accumTexture);
+                quad->Draw(pathTraceShader);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
+                glViewport(tileWidth * tile.x, tileHeight * tile.y, tileWidth, tileHeight);
+                glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
+                quad->Draw(outputShader);
+            }
             // pathTraceTexture is copied to accumTexture and re-used as input for the first step.
-            /*glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
-            glViewport(0, 0, renderSize.x, renderSize.y);
-            glBindTexture(GL_TEXTURE_2D, imgPathTrace);
+           /* glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
+            glViewport(tileWidth * tile.x, tileHeight * tile.y, tileWidth, tileHeight);
+            glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
             quad->Draw(outputShader);*/
 
             // Here we render to tileOutputTexture[currentBuffer] but display tileOutputTexture[1-currentBuffer] until all tiles are done rendering
@@ -679,7 +691,7 @@ namespace GLSLPT
             if (scene->renderOptions.enableDenoiser && denoised)
                 glBindTexture(GL_TEXTURE_2D, denoisedTexture);
             else
-                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[currentBuffer]);
+                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
 
             quad->Draw(outputShader);
         }
@@ -703,7 +715,7 @@ namespace GLSLPT
         if (scene->renderOptions.enableDenoiser && denoised)
             glBindTexture(GL_TEXTURE_2D, denoisedTexture);
         else
-            glBindTexture(GL_TEXTURE_2D, tileOutputTexture[currentBuffer]);
+            glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
 
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, *data);
     }
@@ -778,7 +790,7 @@ namespace GLSLPT
             if (!denoised || (frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0))
             {
                 // FIXME: Figure out a way to have transparency with denoiser
-                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[currentBuffer]);
+                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
                 glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
 
                 // Create an Intel Open Image Denoise device
@@ -826,22 +838,20 @@ namespace GLSLPT
         else // Update render state
         {
             frameCounter++;
-            //tile.x++;
-            //if (tile.x >= numTiles.x)
-            //{
-            //    tile.x = 0;
-            //    tile.y--;
-            //    if (tile.y < 0)
-            //    {
-            //        // If we've reached here, it means all the tiles have been rendered (for a single sample) and the image can now be displayed.
-            //        tile.x = 0;
-            //        tile.y = numTiles.y - 1;
-            //        sampleCounter++;
-            //        currentBuffer = 1 - currentBuffer;
-            //    }
-            //}
-            
-            //currentBuffer = 1 - currentBuffer;
+            tile.x++;
+            if (tile.x >= numTiles.x)
+            {
+                tile.x = 0;
+                tile.y--;
+                if (tile.y < 0)
+                {
+                    // If we've reached here, it means all the tiles have been rendered (for a single sample) and the image can now be displayed.
+                    tile.x = 0;
+                    tile.y = numTiles.y - 1;
+                    sampleCounter++;
+                    currentBuffer = 1 - currentBuffer;
+                }
+            }
         }
 
         // Update uniforms
@@ -862,6 +872,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "envMapRot"), scene->renderOptions.envMapRot / 360.0f);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tile.x * invNumTiles.x, (float)tile.y * invNumTiles.y);
+        glUniform2f(glGetUniformLocation(shaderObject, "tileStartPos"), (float)tileWidth* tile.x, (float)tileHeight* tile.y);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
         glUniform1f(glGetUniformLocation(shaderObject, "roughnessMollificationAmt"), scene->renderOptions.roughnessMollificationAmt);
         glUniform1i(glGetUniformLocation(shaderObject, "frameNum"), frameCounter);
